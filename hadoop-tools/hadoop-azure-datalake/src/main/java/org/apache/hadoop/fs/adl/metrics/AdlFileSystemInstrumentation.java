@@ -1,6 +1,8 @@
 package org.apache.hadoop.fs.adl.metrics;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.microsoft.azure.datalake.store.Metric;
+import com.microsoft.azure.datalake.store.MetricRegistry;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.metrics2.MetricsCollector;
@@ -11,12 +13,12 @@ import org.apache.hadoop.metrics2.impl.MetricsSystemImpl;
 import org.apache.hadoop.metrics2.lib.MetricsRegistry;
 import org.apache.hadoop.metrics2.lib.MutableCounterLong;
 import org.apache.hadoop.metrics2.lib.MutableMetric;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.net.URI;
 import java.util.UUID;
-
-import static org.apache.hadoop.fs.adl.metrics.Statistic.*;
 
 /**
  * A metrics source for the ADL file system to track all the metrics we care
@@ -28,7 +30,7 @@ import static org.apache.hadoop.fs.adl.metrics.Statistic.*;
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
 public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
-
+    static final Logger LOG = LoggerFactory.getLogger(AdlFileSystemInstrumentation.class);
     private static final String METRICS_SOURCE_BASENAME = "AdlMetrics";
 
     /**
@@ -54,26 +56,25 @@ public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
 
     private final MetricsRegistry registry = new MetricsRegistry("adlFileSystem").setContext("adlFileSystem");
 
-    private static final Statistic[] COUNTERS_TO_CREATE = {
-            OPEN,
-            OPEN_LATENCY,
-            GETFILESTATUS,
-            GETFILESTATUS_LATENCY,
-            MSGETFILESTATUS,
-            MSGETFILESTATUS_LATENCY
-    };
-
     public AdlFileSystemInstrumentation(URI uri) {
         UUID fileSystemInstanceId = UUID.randomUUID();
         registry.tag("adlFileSystemId",
                 "A unique identifier for the file ",
                 fileSystemInstanceId.toString());
         registry.tag(METRIC_TAG_BUCKET, "Hostname from the FS URL", uri.getHost());
-
-        for (Statistic statistic : COUNTERS_TO_CREATE) {
-            counter(statistic);
-        }
         registerAsMetricsSource(uri);
+        dumpAllMetrics();
+        LOG.info("AdlFileSystemInstrumentation constructor log");
+        System.out.println("AdlFileSystemInstrumentation invoked");
+    }
+
+    public void dumpAllMetrics() {
+        MetricRegistry metricRegistry = new MetricRegistry();
+        for (Metric metric : metricRegistry.getMetricList()) {
+            registry.newCounter(metric.getName(), metric.getDescription(), metric.getTotal());
+            System.out.println("metricName: " + metric.getName() + " metricTotal: "
+                    + metric.getTotal() + " metricAvg: " + metric.getAvg());
+        }
     }
 
     @VisibleForTesting
@@ -126,16 +127,6 @@ public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
     }
 
     /**
-     * Create a counter in the registry.
-     * @param op statistic to count
-     * @return a new counter
-     */
-    protected final MutableCounterLong counter(Statistic op) {
-        return counter(op.getSymbol(), op.getDescription());
-    }
-
-
-    /**
      * Increment a specific counter.
      * No-op if not defined.
      * @param op operation
@@ -146,6 +137,7 @@ public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
         if (counter != null) {
             counter.incr(count);
         }
+        LOG.info(op.getSymbol() + " metrics counter incremented!");
     }
 
     /**
@@ -163,6 +155,7 @@ public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
             throw new IllegalStateException("Metric " + name
                     + " is not a MutableCounterLong: " + metric);
         }
+        LOG.info("lookup counter log for " + name);
         return (MutableCounterLong) metric;
     }
 

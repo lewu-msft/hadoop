@@ -9,91 +9,91 @@ import java.util.Map;
 public enum Statistic {
 
     OPEN                        ("OPEN", "OPEN", "counts"),
-    OPEN_LATENCY                ("OPENLATENCY", "OPEN", "counts"),
+    OPEN_LATENCY                ("OPENLATENCY", "OPENLATENCY", "counts"),
 
-    GETFILESTATUS               ("GETFILESTATUS", "", ""),
-    GETFILESTATUS_LATENCY       ("GETFILESTATUSLATENCY", "", ""),
+    GETFILESTATUS               ("GETFILESTATUS", "GETFILESTATUS", "counts"),
+    GETFILESTATUS_LATENCY       ("GETFILESTATUSLATENCY", "GETFILESTATUSLATENCY", "counts"),
 
-    MSGETFILESTATUS             ("MSGETFILESTATUS", "", ""),
-    MSGETFILESTATUS_LATENCY     ("MSGETFILESTATUSLATENCY", "", ""),
+    MSGETFILESTATUS             ("MSGETFILESTATUS", "MSGETFILESTATUS", "counts"),
+    MSGETFILESTATUS_LATENCY     ("MSGETFILESTATUSLATENCY", "MSGETFILESTATUSLATENCY", "counts"),
 
-    LISTSTATUS                  ("LISTSTATUS", "", ""),
-    LISTSTATUS_LATENCY          ("LISTSTATUSLATENCY", "", ""),
+    LISTSTATUS                  ("LISTSTATUS", "LISTSTATUS", "counts"),
+    LISTSTATUS_LATENCY          ("LISTSTATUSLATENCY", "LISTSTATUSLATENCY", "counts"),
 
-    MSLISTSTATUS                ("MSLISTSTATUS", "", ""),
-    MSLISTSTATUS_LATENCY        ("MSLISTSTATUSLATENCY", "", ""),
+    MSLISTSTATUS                ("MSLISTSTATUS", "MSLISTSTATUS", "counts"),
+    MSLISTSTATUS_LATENCY        ("MSLISTSTATUSLATENCY", "MSLISTSTATUSLATENCY", "counts"),
 
-    GETCONTENTSUMMARY           ("GETCONTENTSUMMARY", "", ""),
-    GETCONTENTSUMMARY_LATENCY   ("GETCONTENTSUMMARY", "", ""),
+    GETCONTENTSUMMARY           ("GETCONTENTSUMMARY", "GETCONTENTSUMMARY", "counts"),
+    GETCONTENTSUMMARY_LATENCY   ("GETCONTENTSUMMARYLATENCY", "GETCONTENTSUMMARYLATENCY", "counts"),
 
-    GETFILECHECKSUM             ("GETFILECHECKSUM", "", ""),
-    GETFILECHECKSUM_LATENCY     ("GETFILECHECKSUM", "", ""),
+    GETFILECHECKSUM             ("GETFILECHECKSUM", "GETFILECHECKSUM", "counts"),
+    GETFILECHECKSUM_LATENCY     ("GETFILECHECKSUMLATENCY", "GETFILECHECKSUMLATENCY", "counts"),
 
-    GETACLSTATUS                ("GETACLSTATUS", "", ""),
-    GETACLSTATUS_LATENCY        ("GETACLSTATUS", "", ""),
+    GETACLSTATUS                ("GETACLSTATUS", "GETACLSTATUS", "counts"),
+    GETACLSTATUS_LATENCY        ("GETACLSTATUSLATENCY", "GETACLSTATUSLATENCY", "counts"),
 
-    MSGETACLSTATUS              ("MSGETACLSTATUS", "", ""),
-    MSGETACLSTATUS_LATENCY      ("MSGETACLSTATUS", "", ""),
+    MSGETACLSTATUS              ("MSGETACLSTATUS", "MSGETACLSTATUS", "counts"),
+    MSGETACLSTATUS_LATENCY      ("MSGETACLSTATUSLATENCY", "MSGETACLSTATUSLATENCY", "counts"),
 
-    CHECKACCESS                 ("CHECKACCESS", "", ""),
-    CHECKACCESS_LATENCY         ("CHECKACCESS", "", ""),
+    CHECKACCESS                 ("CHECKACCESS", "CHECKACCESS", "counts"),
+    CHECKACCESS_LATENCY         ("CHECKACCESSLATENCY", "CHECKACCESSLATENCY", "counts"),
 
-    CREATE                      ("CREATE",             "", ""),
-    CREATE_LATENCY              ("CREATE",             "", ""),
+    CREATE                      ("CREATE", "CREATE", "counts"),
+    CREATE_LATENCY              ("CREATELATENCY", "CREATELATENCY", "counts"),
 
-    MKDIRS                      ("MKDIRS",             "", ""),
-    MKDIRS_LATENCY              ("MKDIRS",             "", ""),
+    MKDIRS                      ("MKDIRS", "MKDIRS", "counts"),
+    MKDIRS_LATENCY              ("MKDIRSLATENCY", "MKDIRSLATENCY", "counts"),
 
-    RENAME                      ("RENAME",             "", ""),
-    RENAME_LATENCY              ("RENAME",             "", ""),
+    RENAME                      ("RENAME", "RENAME", "counts"),
+    RENAME_LATENCY              ("RENAMELATENCY", "RENAMELATENCY", "counts"),
 
     SETOWNER                    ("SETOWNER",           "", ""),
-    SETOWNER_LATENCY            ("SETOWNER",           "", ""),
+    SETOWNER_LATENCY            ("SETOWNERLATENCY",           "", ""),
 
     SETPERMISSION               ("SETPERMISSION",      "", ""),
-    SETPERMISSION_LATENCY       ("SETPERMISSION",      "", ""),
+    SETPERMISSION_LATENCY       ("SETPERMISSIONLATENCY",      "", ""),
 
     SETTIMES                    ("SETTIMES",           "", ""),
-    SETTIMES_LATENCY            ("SETTIMES",           "", ""),
+    SETTIMES_LATENCY            ("SETTIMESLATENCY",           "", ""),
 
     MODIFYACLENTRIES            ("MODIFYACLENTRIES",   "", ""),
-    MODIFYACLENTRIES_LATENCY    ("MODIFYACLENTRIES",   "", ""),
+    MODIFYACLENTRIES_LATENCY    ("MODIFYACLENTRIESLATENCY",   "", ""),
 
     REMOVEACLENTRIES            ("REMOVEACLENTRIES",   "", ""),
-    REMOVEACLENTRIES_LATENCY    ("REMOVEACLENTRIES",   "", ""),
+    REMOVEACLENTRIES_LATENCY    ("REMOVEACLENTRIESLATENCY",   "", ""),
 
     REMOVEDEFAULTACL            ("REMOVEDEFAULTACL",   "", ""),
-    REMOVEDEFAULTACL_LATENCY    ("REMOVEDEFAULTACL",   "", ""),
+    REMOVEDEFAULTACL_LATENCY    ("REMOVEDEFAULTACLLATENCY",   "", ""),
 
     REMOVEACL                   ("REMOVEACL",          "", ""),
-    REMOVEACL_LATENCY           ("REMOVEACL",          "", ""),
+    REMOVEACL_LATENCY           ("REMOVEACLLATENCY",          "", ""),
 
     SETACL                      ("SETACL",             "SETACL", ""),
-    SETACL_LATENCY              ("SETACL",             "SETACL", ""),
+    SETACL_LATENCY              ("SETACLLATENCY",             "SETACL", ""),
 
     CREATENONRECURSIVE          ("CREATENONRECURSIVE", "CREATENONRECURSIVE", ""),
-    CREATENONRECURSIVE_LATENCY  ("CREATENONRECURSIVE", "CREATENONRECURSIVE", ""),
+    CREATENONRECURSIVE_LATENCY  ("CREATENONRECURSIVELATENCY", "CREATENONRECURSIVE", ""),
 
     APPEND                      ("APPEND", "", ""),
-    APPEND_LATENCY              ("APPEND", "", ""),
+    APPEND_LATENCY              ("APPENDLATENCY", "", ""),
 
     CONCAT                      ("CONCAT", "", ""),
-    CONCAT_LATENCY              ("CONCAT", "", ""),
+    CONCAT_LATENCY              ("CONCATLATENCY", "", ""),
 
     MSCONCAT                    ("MSCONCAT", "", ""),
-    MSCONCAT_LATENCY            ("MSCONCAT", "", ""),
+    MSCONCAT_LATENCY            ("MSCONCATLATENCY", "", ""),
 
     DELETE                      ("DELETE", "", ""),
-    DELETE_LATENCY              ("DELETE", "", ""),
+    DELETE_LATENCY              ("DELETELATENCY", "", ""),
 
     CONCURRENTAPPEND            ("CONCURRENTAPPEND", "", ""),
-    CONCURRENTAPPEND_LATENCY    ("CONCURRENTAPPEND", "", ""),
+    CONCURRENTAPPEND_LATENCY    ("CONCURRENTAPPENDLATENCY", "", ""),
 
     SETEXPIRY                   ("SETEXPIRY", "", ""),
-    SETEXPIRY_LATENCY           ("SETEXPIRY", "", ""),
+    SETEXPIRY_LATENCY           ("SETEXPIRYLATENCY", "", ""),
 
     GETFILEINFO                 ("GETFILEINFO", "", ""),
-    GETFILEINFO_LATENCY         ("GETFILEINFO", "", ""),
+    GETFILEINFO_LATENCY         ("GETFILEINFOLATENCY", "", ""),
 
 
     READ_CATEGORY               ("readCategory", "", ""),
