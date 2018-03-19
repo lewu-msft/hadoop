@@ -1,6 +1,7 @@
 package org.apache.hadoop.fs.adl.metrics;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.microsoft.azure.datalake.store.ADLStoreClient;
 import com.microsoft.azure.datalake.store.Metric;
 import com.microsoft.azure.datalake.store.MetricRegistry;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -47,6 +49,8 @@ public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
 
     private String metricsSourceName;
 
+    private ADLStoreClient adlStoreClient;
+
     // metricsSystemLock must be used to synchronize modifications to
     // metricsSystem and the following counters.
     private static Object metricsSystemLock = new Object();
@@ -56,25 +60,14 @@ public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
 
     private final MetricsRegistry registry = new MetricsRegistry("adlFileSystem").setContext("adlFileSystem");
 
-    public AdlFileSystemInstrumentation(URI uri) {
+    public AdlFileSystemInstrumentation(URI uri, ADLStoreClient adlStoreClient) {
         UUID fileSystemInstanceId = UUID.randomUUID();
         registry.tag("adlFileSystemId",
                 "A unique identifier for the file ",
                 fileSystemInstanceId.toString());
         registry.tag(METRIC_TAG_BUCKET, "Hostname from the FS URL", uri.getHost());
         registerAsMetricsSource(uri);
-        dumpAllMetrics();
-        LOG.info("AdlFileSystemInstrumentation constructor log");
-        System.out.println("AdlFileSystemInstrumentation invoked");
-    }
-
-    public void dumpAllMetrics() {
-        MetricRegistry metricRegistry = new MetricRegistry();
-        for (Metric metric : metricRegistry.getMetricList()) {
-            registry.newCounter(metric.getName(), metric.getDescription(), metric.getTotal());
-            System.out.println("metricName: " + metric.getName() + " metricTotal: "
-                    + metric.getTotal() + " metricAvg: " + metric.getAvg());
-        }
+        this.adlStoreClient = adlStoreClient;
     }
 
     @VisibleForTesting
@@ -114,16 +107,6 @@ public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
         }
         metricsSourceName = msName + "-" + uri.getHost();
         metricsSystem.register(metricsSourceName, "", this);
-    }
-
-    /**
-     * Create a counter in the registry.
-     * @param name counter name
-     * @param desc counter description
-     * @return a new counter
-     */
-    protected final MutableCounterLong counter(String name, String desc) {
-        return registry.newCounter(name, desc, 0L);
     }
 
     /**
@@ -184,6 +167,15 @@ public class AdlFileSystemInstrumentation implements Closeable, MetricsSource {
 
     @Override
     public void getMetrics(MetricsCollector builder, boolean all) {
+        dumpAllMetrics();
         registry.snapshot(builder.addRecord(registry.info().name()), true);
+    }
+
+    public void dumpAllMetrics() {
+        List<Metric> metricList = adlStoreClient.getMetricList();
+        for (Metric metric : metricList) {
+            registry.newCounter(metric.getName(), metric.getDescription(), metric.getTotal());
+            LOG.info("metricName: " + metric.getName() + " with metricTotal of: " + metric.getTotal());
+        }
     }
 }

@@ -26,12 +26,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.microsoft.azure.datalake.store.ADLStoreClient;
-import com.microsoft.azure.datalake.store.ADLStoreOptions;
-import com.microsoft.azure.datalake.store.DirectoryEntry;
-import com.microsoft.azure.datalake.store.IfExists;
-import com.microsoft.azure.datalake.store.LatencyTracker;
-import com.microsoft.azure.datalake.store.UserGroupRepresentation;
+import com.microsoft.azure.datalake.store.*;
 import com.microsoft.azure.datalake.store.oauth2.AccessTokenProvider;
 import com.microsoft.azure.datalake.store.oauth2.ClientCredsTokenProvider;
 import com.microsoft.azure.datalake.store.oauth2.DeviceCodeTokenProvider;
@@ -165,7 +160,7 @@ public class AdlFileSystem extends FileSystem {
     adlClient = ADLStoreClient
         .createClient(accountFQDN, getAccessTokenProvider(conf));
 
-    instrumentation = new AdlFileSystemInstrumentation(storeUri);
+    instrumentation = new AdlFileSystemInstrumentation(storeUri, adlClient);
 
     ADLStoreOptions options = new ADLStoreOptions();
     options.enableThrowingRemoteExceptions();
@@ -520,6 +515,11 @@ public class AdlFileSystem extends FileSystem {
         adlClient.enumerateDirectory(toRelativeFilePath(f), oidOrUpn);
     FileStatus[] fileStatuses = toFileStatuses(entries, f);
     entryPoint(LISTSTATUS, System.currentTimeMillis() - start);
+
+    List<Metric> metricList = adlClient.getMetricList();
+    for (Metric metric : metricList) {
+      System.out.println("metricName: " + metric.getName() + " with metricTotal of: " + metric.getTotal());
+    }
     return fileStatuses;
   }
 
