@@ -26,12 +26,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.microsoft.azure.datalake.store.ADLStoreClient;
-import com.microsoft.azure.datalake.store.ADLStoreOptions;
-import com.microsoft.azure.datalake.store.DirectoryEntry;
-import com.microsoft.azure.datalake.store.IfExists;
-import com.microsoft.azure.datalake.store.LatencyTracker;
-import com.microsoft.azure.datalake.store.UserGroupRepresentation;
+import com.microsoft.azure.datalake.store.*;
 import com.microsoft.azure.datalake.store.oauth2.AccessTokenProvider;
 import com.microsoft.azure.datalake.store.oauth2.ClientCredsTokenProvider;
 import com.microsoft.azure.datalake.store.oauth2.DeviceCodeTokenProvider;
@@ -54,6 +49,8 @@ import org.apache.hadoop.fs.InvalidPathException;
 import org.apache.hadoop.fs.Options;
 import org.apache.hadoop.fs.Options.Rename;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.adl.metrics.AdlFileSystemInstrumentation;
+import org.apache.hadoop.fs.adl.metrics.Statistic;
 import org.apache.hadoop.fs.adl.oauth2.AzureADTokenProvider;
 import org.apache.hadoop.fs.permission.AclEntry;
 import org.apache.hadoop.fs.permission.AclStatus;
@@ -67,6 +64,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.VersionInfo;
 
 import static org.apache.hadoop.fs.adl.AdlConfKeys.*;
+import static org.apache.hadoop.fs.adl.metrics.Statistic.*;
 
 /**
  * A FileSystem to access Azure Data Lake Store.
@@ -83,7 +81,7 @@ public class AdlFileSystem extends FileSystem {
   private Path workingDirectory;
   private boolean aclBitStatus;
   private UserGroupRepresentation oidOrUpn;
-
+  private AdlFileSystemInstrumentation instrumentation;
 
   // retained for tests
   private AccessTokenProvider tokenProvider;
@@ -161,6 +159,8 @@ public class AdlFileSystem extends FileSystem {
 
     adlClient = ADLStoreClient
         .createClient(accountFQDN, getAccessTokenProvider(conf));
+
+    instrumentation = new AdlFileSystemInstrumentation(storeUri, adlClient);
 
     ADLStoreOptions options = new ADLStoreOptions();
     options.enableThrowingRemoteExceptions();
@@ -357,12 +357,16 @@ public class AdlFileSystem extends FileSystem {
   public FSDataOutputStream create(Path f, FsPermission permission,
       boolean overwrite, int bufferSize, short replication, long blockSize,
       Progressable progress) throws IOException {
+    Long start = System.currentTimeMillis();
+    entryPoint(CREATE, 1);
     statistics.incrementWriteOps(1);
     IfExists overwriteRule = overwrite ? IfExists.OVERWRITE : IfExists.FAIL;
-    return new FSDataOutputStream(new AdlFsOutputStream(adlClient
+    FSDataOutputStream fsDataOutputStream = new FSDataOutputStream(new AdlFsOutputStream(adlClient
         .createFile(toRelativeFilePath(f), overwriteRule,
             Integer.toOctalString(applyUMask(permission).toShort()), true),
         getConf()), this.statistics);
+    entryPoint(CREATE, System.currentTimeMillis() - start);
+    return fsDataOutputStream;
   }
 
   /**
@@ -387,6 +391,8 @@ public class AdlFileSystem extends FileSystem {
   public FSDataOutputStream createNonRecursive(Path f, FsPermission permission,
       EnumSet<CreateFlag> flags, int bufferSize, short replication,
       long blockSize, Progressable progress) throws IOException {
+    Long start = System.currentTimeMillis();
+    entryPoint(CREATENONRECURSIVE, 1);
     statistics.incrementWriteOps(1);
     IfExists overwriteRule = IfExists.FAIL;
     for (CreateFlag flag : flags) {
@@ -396,10 +402,12 @@ public class AdlFileSystem extends FileSystem {
       }
     }
 
-    return new FSDataOutputStream(new AdlFsOutputStream(adlClient
+    FSDataOutputStream fsDataOutputStream = new FSDataOutputStream(new AdlFsOutputStream(adlClient
         .createFile(toRelativeFilePath(f), overwriteRule,
             Integer.toOctalString(applyUMask(permission).toShort()), false),
         getConf()), this.statistics);
+    entryPoint(CREATENONRECURSIVE, System.currentTimeMillis() - start);
+    return fsDataOutputStream;
   }
 
   /**
@@ -414,10 +422,14 @@ public class AdlFileSystem extends FileSystem {
   @Override
   public FSDataOutputStream append(Path f, int bufferSize,
       Progressable progress) throws IOException {
+    Long start = System.currentTimeMillis();
+    entryPoint(APPEND, 1);
     statistics.incrementWriteOps(1);
-    return new FSDataOutputStream(
+    FSDataOutputStream fsDataOutputStream = new FSDataOutputStream(
         new AdlFsOutputStream(adlClient.getAppendStream(toRelativeFilePath(f)),
             getConf()), this.statistics);
+    entryPoint(APPEND, System.currentTimeMillis() - start);
+    return fsDataOutputStream;
   }
 
   /**
@@ -455,10 +467,14 @@ public class AdlFileSystem extends FileSystem {
   @Override
   public FSDataInputStream open(final Path f, final int buffersize)
       throws IOException {
+    Long start = System.currentTimeMillis();
+    entryPoint(OPEN, 1);
     statistics.incrementReadOps(1);
-    return new FSDataInputStream(
+    FSDataInputStream fsDataInputStream = new FSDataInputStream(
         new AdlFsInputStream(adlClient.getReadStream(toRelativeFilePath(f)),
             statistics, getConf()));
+    entryPoint(OPEN, System.currentTimeMillis() - start);
+    return fsDataInputStream;
   }
 
   /**
@@ -471,10 +487,14 @@ public class AdlFileSystem extends FileSystem {
    */
   @Override
   public FileStatus getFileStatus(final Path f) throws IOException {
+    Long start = System.currentTimeMillis();
+    entryPoint(GETFILESTATUS, 1);
     statistics.incrementReadOps(1);
     DirectoryEntry entry =
         adlClient.getDirectoryEntry(toRelativeFilePath(f), oidOrUpn);
-    return toFileStatus(entry, f);
+    FileStatus fileStatus = toFileStatus(entry, f);
+    entryPoint(GETFILESTATUS, System.currentTimeMillis() - start);
+    return fileStatus;
   }
 
   /**
@@ -488,10 +508,19 @@ public class AdlFileSystem extends FileSystem {
    */
   @Override
   public FileStatus[] listStatus(final Path f) throws IOException {
+    Long start = System.currentTimeMillis();
+    entryPoint(LISTSTATUS, 1);
     statistics.incrementReadOps(1);
     List<DirectoryEntry> entries =
         adlClient.enumerateDirectory(toRelativeFilePath(f), oidOrUpn);
-    return toFileStatuses(entries, f);
+    FileStatus[] fileStatuses = toFileStatuses(entries, f);
+    entryPoint(LISTSTATUS, System.currentTimeMillis() - start);
+
+    List<Metric> metricList = adlClient.getMetricList();
+    for (Metric metric : metricList) {
+      System.out.println("metricName: " + metric.getName() + " with metricTotal of: " + metric.getTotal());
+    }
+    return fileStatuses;
   }
 
   /**
@@ -984,5 +1013,17 @@ public class AdlFileSystem extends FileSystem {
   public void setUserGroupRepresentationAsUPN(boolean enableUPN) {
     oidOrUpn = enableUPN ? UserGroupRepresentation.UPN :
         UserGroupRepresentation.OID;
+  }
+
+  /**
+   * Entry point to an operation.
+   * Increments the statistic; verifies the FS is active.
+   * @param statistic The operation to increment
+   * @param value The value to increment
+   * @throws IOException if the
+   */
+  protected void entryPoint(Statistic statistic, long value) throws IOException {
+//    checkNotClosed();
+    instrumentation.incrementCounter(statistic, value);
   }
 }
